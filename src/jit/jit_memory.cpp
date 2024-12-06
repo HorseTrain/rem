@@ -2,7 +2,6 @@
 #include <string.h>
 
 #include "jit_memory.h"
-#include "malloc.h"
 
 #define USE_MEMPROTECT (defined __linux__) || (defined __APPLE__)
 #define USE_VIRTUAL_PROTECT (defined _WIN32)

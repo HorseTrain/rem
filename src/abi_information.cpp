@@ -7,7 +7,7 @@ os_information get_running_os()
     #elif defined _WIN32
         return os_information::_windows;
     #elif define __APPLE__
-        return os_information::_apple;
+        return os_information::_macos;
     #endif
 
     return os_information::_unknown;
