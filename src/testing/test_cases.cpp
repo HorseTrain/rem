@@ -23,7 +23,7 @@ static void emit_binary_operations(test_enviroment* test,abi abi_information, ir
 
     for (int i = 0; i < iterations; ++i)
     {
-        uint64_t working_size = int8 + (i % 4);
+        uint64_t working_size = i % 4;
         
         ir_operand n;
         ir_operand m;
@@ -54,46 +54,63 @@ static void emit_binary_operations(test_enviroment* test,abi abi_information, ir
     }
 }
 
-void test_all(abi abi_information)
+void test_all(abi abi_information, int iteration)
 {
-    srand(0);
+    srand(iteration);
 
     test_enviroment enviroment;
     test_enviroment::create(&enviroment, abi_information);
 
-    int register_max = 100;
+    int register_max = 20;
 
     for (int i = 0; i < register_max; ++i)
     {
         ir_operation_block::emitds(enviroment.ir, ir_move, ir_operand::create_reg(i), ir_operand::create_con(create_random_number()));
     }
 
-    emit_binary_operations(&enviroment,abi_information, ir_add, 1000, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_bitwise_and, 1000, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_bitwise_exclusive_or, 1000, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_bitwise_or, 1000, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_compare_equal, 1000, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_compare_greater_equal_signed, 1, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_compare_greater_equal_unsigned, 1, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_compare_greater_signed, 1, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_compare_greater_unsigned, 1, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_compare_less_equal_signed, 1, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_compare_less_equal_unsigned, 1, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_compare_less_signed, 1, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_compare_less_unsigned, 1, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_compare_not_equal, 1000, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_divide_signed, 1000, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_divide_unsigned, 1000, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_multiply, 1000, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_multiply_hi_signed, 1000, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_multiply_hi_signed, 1000, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_multiply_hi_unsigned, 1000, register_max);
-    emit_binary_operations(&enviroment,abi_information, ir_subtract, 1000, register_max);
+    int count = 20;
+    
+    emit_binary_operations(&enviroment,abi_information, ir_add, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_bitwise_and, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_bitwise_exclusive_or, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_bitwise_or, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_compare_equal, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_divide_signed, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_divide_unsigned, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_multiply, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_multiply_hi_signed, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_multiply_hi_unsigned, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_subtract, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_compare_greater_equal_signed, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_compare_greater_equal_unsigned, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_compare_greater_signed, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_compare_greater_unsigned, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_compare_less_equal_signed, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_compare_less_equal_unsigned, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_compare_less_signed, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_compare_equal, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_compare_not_equal, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_multiply_hi_unsigned, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_multiply_hi_signed, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_divide_signed, count, register_max);
+    emit_binary_operations(&enviroment,abi_information, ir_divide_unsigned, count, register_max);
 
-    ir_operation_block::emits(enviroment.ir, ir_close_and_return, random_reg(int64,register_max));
+    for (int i = 0; i < register_max; ++i)
+    {
+        ir_operation_block::emitds(enviroment.ir, ir_bitwise_exclusive_or, ir_operand::create_reg(0, int64), ir_operand::create_reg(0, int64), ir_operand::create_reg(i, int64));
+    }
+
+    ir_operation_block::emits(enviroment.ir, ir_close_and_return, ir_operand::create_reg(0, int64));
 
     uint64_t jit_result = test_enviroment::execute_jit(&enviroment, nullptr);
     uint64_t emulator_result = test_enviroment::execute_emulator(&enviroment, nullptr);
+
+    if (emulator_result != jit_result)
+    {
+        ir_operation_block::log(enviroment.ir);
+    }
+
+    std::cout << jit_result << " " << emulator_result << std::endl;
 
     assert(emulator_result == jit_result);
 

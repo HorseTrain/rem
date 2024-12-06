@@ -3,10 +3,12 @@
 #include "testing/test_cases.h"
 int main()
 {
+    int i = 0;
+
     while (1)
     {
-        test_all(get_abi());
+        test_all(get_abi(), i);
 
-        std::cout << "done" << std::endl;
+        ++i;
     }
 }

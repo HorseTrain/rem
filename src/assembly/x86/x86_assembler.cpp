@@ -125,23 +125,40 @@ void assemble_x86_64_code(void** result_code, uint64_t* result_code_size, ir_ope
 			ir_operand* destinations = working_operation.destinations.data;
 			ir_operand* sources = working_operation.sources.data;
 
-			assert_all_registers(&working_operation);
 			assert_operand_count(&working_operation, 1, 2);
-			assert_is_x86_register(&sources[1], RCX);
 
 			assert(ir_operand::are_equal(destinations[0], sources[0]));
 
 			Xbyak::Operand dn = create_operand(destinations[0]);
-			Xbyak::Reg8 m = create_operand<Xbyak::Reg8>(sources[1]);
 
-			switch (instruction)
+			if (ir_operand::is_register(&sources[1]))
 			{
-			case ir_shift_left:				c.shl(dn, m); break;
-			case ir_shift_right_signed:		c.sar(dn, m); break;
-			case ir_shift_right_unsigned:	c.shr(dn, m); break;
-			case ir_rotate_right:			c.ror(dn, m); break;
-			default: throw 0;
+				Xbyak::Reg8 m = create_operand<Xbyak::Reg8>(sources[1]);
+				assert_is_x86_register(&sources[1], RCX);
+
+				switch (instruction)
+				{
+				case ir_shift_left:				c.shl(dn, m); break;
+				case ir_shift_right_signed:		c.sar(dn, m); break;
+				case ir_shift_right_unsigned:	c.shr(dn, m); break;
+				case ir_rotate_right:			c.ror(dn, m); break;
+				default: throw 0;
+				}
 			}
+			else
+			{
+				int shift = sources[1].value;
+
+				switch (instruction)
+				{
+				case ir_shift_left:				c.shl(dn, shift); break;
+				case ir_shift_right_signed:		c.sar(dn, shift); break;
+				case ir_shift_right_unsigned:	c.shr(dn, shift); break;
+				case ir_rotate_right:			c.ror(dn, shift); break;
+				default: throw 0;
+				}
+			}
+
 
 		}; break;
 
@@ -201,7 +218,10 @@ void assemble_x86_64_code(void** result_code, uint64_t* result_code_size, ir_ope
 			case ir_compare_not_equal:				c.setne(create_operand<Xbyak::Reg8>(destinations[0])); break;
 			}
 
-			c.and_(create_operand(destinations[0]), 1);
+			ir_operand d = destinations[0];
+			d.meta_data = int64;
+			
+			c.and_(create_operand(d), 1);
 
 		}; break;
 

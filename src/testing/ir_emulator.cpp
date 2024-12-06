@@ -59,7 +59,7 @@ static uint64_t get_mask_from_size(uint64_t size)
     return mask;
 }
 
-static uint64_t sign_extend_from_size(uint64_t source, uint64_t size)
+static int64_t sign_extend_from_size(uint64_t source, uint64_t size)
 {
     if (size == int64)
         return source;
@@ -165,14 +165,14 @@ static void execute_operation_binary(ir_emulator* ir_emulator_context)
         case ir_bitwise_exclusive_or:           result = x ^ y; break;
         case ir_bitwise_or:                     result = x | y; break;
         case ir_compare_equal:                  result = x == y; break;
-        case ir_compare_greater_equal_signed:   result = sign_extend_from_size(x, working_size) >= sign_extend_from_size(x, working_size); break;
-        case ir_compare_greater_equal_unsigned: result = x >= x; break;
-        case ir_compare_greater_signed:         result = sign_extend_from_size(x, working_size) > sign_extend_from_size(x, working_size); break;
-        case ir_compare_greater_unsigned:       result = x >  x; break;
-        case ir_compare_less_equal_signed:      result = sign_extend_from_size(x, working_size) <= sign_extend_from_size(x, working_size); break;
-        case ir_compare_less_equal_unsigned:    result = x <= x; break;
-        case ir_compare_less_signed:            result = sign_extend_from_size(x, working_size) < sign_extend_from_size(x, working_size); break;
-        case ir_compare_less_unsigned:          result = x <  x; break;
+        case ir_compare_greater_equal_signed:   result = sign_extend_from_size(x, working_size) >= sign_extend_from_size(y, working_size); break;
+        case ir_compare_greater_equal_unsigned: result = x >= y; break;
+        case ir_compare_greater_signed:         result = sign_extend_from_size(x, working_size) > sign_extend_from_size(y, working_size); break;
+        case ir_compare_greater_unsigned:       result = x > y; break;
+        case ir_compare_less_equal_signed:      result = sign_extend_from_size(x, working_size) <= sign_extend_from_size(y, working_size); break;
+        case ir_compare_less_equal_unsigned:    result = x <= y; break;
+        case ir_compare_less_signed:            result = sign_extend_from_size(x, working_size) < sign_extend_from_size(y, working_size); break;
+        case ir_compare_less_unsigned:          result = x < y; break;
         case ir_compare_not_equal:              result = x != y; break;
         case ir_divide_unsigned:                result = x / y; break;
         case ir_multiply:                       result = x * y; break;
@@ -213,6 +213,9 @@ static void execute_operation_binary(ir_emulator* ir_emulator_context)
         break;
     }
     
+    int sx = sign_extend_from_size(x, working_size) ;
+    int sy = sign_extend_from_size(y, working_size) ;
+
     *get_destination(ir_emulator_context, destinations[0]) = zero_extend_from_size(result, working_size);
 
     advance(ir_emulator_context);

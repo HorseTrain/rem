@@ -84,6 +84,13 @@ ir_operand ir_operand::create_hardware_reg(uint64_t value, uint64_t size)
 	return result;
 }
 
+ir_operand ir_operand::copy_new_raw_size(ir_operand source, uint64_t new_size)
+{
+	source.meta_data = (new_size & UINT32_MAX) | (source.meta_data & ~(uint64_t)UINT32_MAX);
+
+	return source;
+}
+
 bool ir_operand::are_equal(ir_operand left, ir_operand right)
 {
 	bool type_equal = left.meta_data == right.meta_data;

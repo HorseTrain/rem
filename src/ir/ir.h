@@ -140,6 +140,7 @@ struct ir_operand
 	static ir_operand	create_con(uint64_t value, uint64_t size = ir_operand_meta::int64);
 	static ir_operand	create_reg(uint64_t value, uint64_t size = ir_operand_meta::int64);
 	static ir_operand	create_hardware_reg(uint64_t value, uint64_t size = ir_operand_meta::int64);
+	static ir_operand	copy_new_raw_size(ir_operand source, uint64_t new_size);
 
 	static bool 		are_equal(ir_operand left, ir_operand right);
 	static bool 		same_size(ir_operand left, ir_operand right);

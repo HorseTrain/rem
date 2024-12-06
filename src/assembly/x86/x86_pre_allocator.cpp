@@ -50,7 +50,7 @@ static ir_operand create_scrap_operand(x86_pre_allocator_context* context, uint6
 	return ir_operand::create_reg(result, size & UINT32_MAX);
 }
 
-static ir_operand register_or_constant(x86_pre_allocator_context* context, ir_operand* source)
+static ir_operand register_or_constant(x86_pre_allocator_context* context, ir_operand* source, bool force_copy = false)
 {
 	if (ir_operand::is_constant(source))
 	{
@@ -61,16 +61,31 @@ static ir_operand register_or_constant(x86_pre_allocator_context* context, ir_op
 		return working_result;
 	}
 	
-	return *source;
+	if (!force_copy)
+		return *source;
+
+	ir_operand copy = create_scrap_operand(context, source->meta_data);
+	
+	emit_move(context, copy, *source);
+
+	return copy;
 }
 
-static void sign_extend_source(x86_pre_allocator_context* context,ir_operand* source, uint64_t new_size)
+static void extend_source(x86_pre_allocator_context* context,ir_operand* source, uint64_t new_size, bool is_signed)
 {
 	ir_operation_block* ir = context->ir;
 
 	ir_operand temp_location = create_scrap_operand(context, new_size);
 
-	ir_operation_block::emitds(ir, ir_sign_extend, temp_location,  *source);
+	if (is_signed)
+	{
+		ir_operation_block::emitds(ir, ir_sign_extend, temp_location, *source);
+	}
+	else
+	{
+		emit_move(context, temp_location, ir_operand::copy_new_raw_size(*source, new_size));
+		ir_operation_block::emitds(ir, ir_bitwise_and, temp_location, temp_location, ir_operand::create_con(255));	
+	}
 
 	*source = temp_location;	
 }
@@ -169,12 +184,25 @@ static void emit_big_multiply_divide(x86_pre_allocator_context* result, uint64_t
 	ir_operand working_source_0 = register_or_constant(result, &source_0);
 	ir_operand working_source_1 = register_or_constant(result, &source_1);
 
-	bool sign_extend_int_8 = ir_operand::get_raw_size(&working_destination) == int8;
+	bool extend_8 = ir_operand::get_raw_size(&working_destination) == int8;
 
-	if (sign_extend_int_8)
+	if (extend_8)
 	{
-		sign_extend_source(result, &working_source_0, int16);
-		sign_extend_source(result, &working_source_1, int16);
+		switch (instruction)
+		{
+			case ir_divide_signed:
+			case ir_multiply_hi_signed:
+			{
+				extend_source(result, &working_source_0, int16, true);
+				extend_source(result, &working_source_1, int16, true);
+			}; break;
+
+			default:
+			{
+				extend_source(result, &working_source_0, int16, false);
+				extend_source(result, &working_source_1, int16, false);
+			}; break;
+		}
 
 		working_destination.meta_data = int16;
 	}
@@ -214,7 +242,15 @@ static void emit_big_multiply_divide(x86_pre_allocator_context* result, uint64_t
 	case ir_multiply_hi_signed:
 	case ir_multiply_hi_unsigned:
 	{
-		emit_move(result, working_destination, dx);
+		if (extend_8)
+		{
+			ir_operation_block::emitds(result->ir, ir_instructions::ir_shift_right_unsigned, ax, ax, ir_operand::create_con(8, int8));
+			emit_move(result, working_destination, ax);
+		}
+		else
+		{
+			emit_move(result, working_destination, dx);
+		}
 	}; break;
 
 	default:
@@ -229,7 +265,18 @@ static void emit_big_multiply_divide(x86_pre_allocator_context* result, uint64_t
 
 static void emit_return(x86_pre_allocator_context* result, ir_operand to_return)
 {
-	ir_operation_block::emits(result->ir, ir_instructions::ir_close_and_return, register_or_constant(result, &to_return), ir_operand::create_con(0));
+	int raw_size = ir_operand::get_raw_size(&to_return);
+
+	to_return = register_or_constant(result, &to_return, raw_size != int64);
+
+	to_return.meta_data = int64;
+
+	if (raw_size <= int16)
+	{
+		ir_operation_block::emitds(result->ir,ir_bitwise_and, to_return, to_return, ir_operand::create_con((1 << (8 << raw_size)) - 1));
+	}
+
+	ir_operation_block::emits(result->ir, ir_instructions::ir_close_and_return,to_return , ir_operand::create_con(0));
 
 	intrusive_linked_list< intrusive_linked_list_element<ir_operation>*>::insert_element(result->revisit_instructions, result->ir->operations->last->prev);
 }
