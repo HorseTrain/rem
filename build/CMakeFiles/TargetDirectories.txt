@@ -1,3 +1,0 @@
-/home/ray/code/rem/build/CMakeFiles/rem.dir
-/home/ray/code/rem/build/CMakeFiles/edit_cache.dir
-/home/ray/code/rem/build/CMakeFiles/rebuild_cache.dir
