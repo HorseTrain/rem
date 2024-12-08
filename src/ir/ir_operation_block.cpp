@@ -286,6 +286,16 @@ bool ir_operation_block::is_label(ir_operation* operation)
 	return ir_operation_block::is_label(operation->instruction);
 }
 
+ir_operand ir_operation_block::create_label(ir_operation_block* block)
+{
+
+}
+
+void ir_operation_block::mark_label(ir_operation_block* block, ir_operand label)
+{
+	
+}
+
 std::string get_string(ir_operand value)
 {
 	uint64_t raw_size = ir_operand::get_raw_size(&value);

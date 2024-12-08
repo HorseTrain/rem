@@ -155,17 +155,23 @@ struct ir_operation
 
 struct ir_operation_block
 {
-	arena_allocator*						allocator;
-	intrusive_linked_list<ir_operation>*	operations;
+	arena_allocator*									allocator;
+	intrusive_linked_list<ir_operation>*				operations;
 
-	static void								create(ir_operation_block** result,arena_allocator* allocator);
-	static void								create_raw_operation(arena_allocator* allocator, ir_operation* result, uint64_t instruction, int destination_count, int source_count);
+	static void											create(ir_operation_block** result,arena_allocator* allocator);
+	static void											create_raw_operation(arena_allocator* allocator, ir_operation* result, uint64_t instruction, int destination_count, int source_count);
+	static void 										create_vector_gp_remap_scheme(arena_allocator* allocator, std::unordered_map<uint64_t, uint64_t>* remap_store, std::unordered_map<uint64_t, uint64_t>** remap_redirect);
+	static void 										clamp_operands(ir_operation_block* ir, bool use_bit_register_allocations, int* size_counts = nullptr);
 	
+	static bool 										is_label(uint64_t instruction);
+	static bool 										is_label(ir_operation* operation);
+	static ir_operand 									create_label(ir_operation_block* block);
+	static void 										mark_label(ir_operation_block* block, ir_operand label);
+
+	static std::string 									get_block_log(ir_operation_block* ir);
+	static void 										log(ir_operation_block* ctx);
+
 	static intrusive_linked_list_element<ir_operation>* emit(ir_operation_block* block,ir_operation operation, intrusive_linked_list_element<ir_operation>* point = nullptr);
-
-	static void create_vector_gp_remap_scheme(arena_allocator* allocator, std::unordered_map<uint64_t, uint64_t>* remap_store, std::unordered_map<uint64_t, uint64_t>** remap_redirect);
-	static void clamp_operands(ir_operation_block* ir, bool use_bit_register_allocations, int* size_counts = nullptr);
-
 	static intrusive_linked_list_element<ir_operation>* emit_with(ir_operation_block* ir, uint64_t instruction, ir_operand* destinations, int destination_count, ir_operand* sources, int source_count, intrusive_linked_list_element<ir_operation>* point = nullptr);
 
 	static intrusive_linked_list_element<ir_operation>* emitds(ir_operation_block* ir, uint64_t instruction, ir_operand destination_0, intrusive_linked_list_element<ir_operation>* point = nullptr);
@@ -181,11 +187,6 @@ struct ir_operation_block
 	static intrusive_linked_list_element<ir_operation>* emits(ir_operation_block* ir, uint64_t instruction, ir_operand source_0, ir_operand source_1, ir_operand source_2, ir_operand source_3, intrusive_linked_list_element<ir_operation>* point = nullptr);
 	static intrusive_linked_list_element<ir_operation>* emits(ir_operation_block* ir, uint64_t instruction, ir_operand source_0, ir_operand source_1, ir_operand source_2, ir_operand source_3, ir_operand source_4, intrusive_linked_list_element<ir_operation>* point = nullptr);
 
-	static bool is_label(uint64_t instruction);
-	static bool is_label(ir_operation* operation);
-
-	static std::string get_block_log(ir_operation_block* ir);
-	static void log(ir_operation_block* ctx);
 };
 
 struct ir_control_flow_node
